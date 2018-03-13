@@ -1,0 +1,20 @@
+{
+  "name": "kloudless",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/AllencxWang/kloudless.git",
+  "author": "Allen Wang <sixesrai3@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "body-parser": "~1.17.1",
+    "cookie-parser": "~1.4.3",
+    "express": "~4.15.2"
+  },
+  "devDependencies": {
+    "nodemon": "^1.17.1"
+  }
+}
