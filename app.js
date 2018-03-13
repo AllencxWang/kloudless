@@ -3,9 +3,11 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const request = require('request');
 const Readable = require('stream').Readable;
-const exphbs  = require('express-handlebars');
-
+const exphbs = require('express-handlebars');
 const app = express();
+const db = require('./db');
+
+db.init();
 
 app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
@@ -39,19 +41,20 @@ app.get('/pages/new', (req, res) => {
 });
 
 app.get('/pages/view', (req, res) => {
-  res.render('view', {
-    main: 'this is handlebar baby'
-  });
+  db.getAll().then(files => res.render('view', {files}));
 });
 
-app.get('/pages/edit', (req, res) => {
-  res.render('edit');
+app.get('/pages/edit/:serial', (req, res) => {
+  const serial = req.params.serial;
+  db.get(serial).then(file => {
+    // TODO: fetch content via API
+    // res.render('edit');
+  }).catch(() => res.status(404).end('404 Not Found'));
 });
 
 app.post('/api/save', (req, res) => {
   const data = JSON.parse(req.body.hidden)[0];
-  console.log('data:', data);
-  const fileName = 'test.txt';
+  const fileName = `${Date.now()}.txt`;
   const options = {
     url: `https://api.kloudless.com/v1/accounts/${data.account}/storage/files/`,
     // url: 'http://localhost:8080/api/endpoint',
@@ -68,12 +71,15 @@ app.post('/api/save', (req, res) => {
   
   stream.pipe(request.post(options, (error, response, body) => {
     if (!error && response.statusCode == 201) {
-      res.status(200).json({error, response, body});
+      const file = JSON.parse(body);
+      db.insert(file).then(() => res.redirect('/pages/new'));
     } else {
       res.status(500).json({error, response, body});
     }
   }));
 });
+
+
 
 app.post('/api/endpoint', (req, res) => {
   console.log('----------');
