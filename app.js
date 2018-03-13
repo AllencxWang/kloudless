@@ -79,7 +79,11 @@ app.post('/api/save', (req, res, next) => {
     if (!error && response.statusCode === 201) {
       const file = JSON.parse(body);
       file.token = expData.bearer_token.key;
-      db.insert(file).then(() => res.redirect('/pages/view'));
+      db.insert(file)
+        .then(() => res.redirect('/pages/view'))
+        .catch(err => {
+          res.status(500).json({error: err});
+        });
     } else {
       res.status(500).json({error, response, body});
     }
