@@ -19,7 +19,7 @@ db.get = serial => {
 };
 
 db.insert = file => {
-  file.serial = db.counter;
+  file.serial = `${db.counter}`;
   db.files.push(file)
   db.counter += 1;
   return Promise.resolve();
