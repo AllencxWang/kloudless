@@ -19,7 +19,7 @@ const download = serial => new Promise((resolve, reject) => {
         'Authorization': `Bearer ${file.token}`,
       }
     };
-    resolve(request(options));
+    resolve({file, readable: request(options)});
   }).catch(reject);
 });
 
@@ -45,9 +45,14 @@ app.get('/pages/view', (req, res) => {
 
 app.get('/pages/edit/:serial', (req, res) => {
   const serial = req.params.serial;
-  db.getBySerial(serial).then(file => {
-    // TODO: fetch content via API
-    // res.render('edit');
+  download(serial).then(({file, readable}) => {
+    const buffer = [];
+    readable.on('data', chunk => buffer.push(chunk));
+    readable.once('end', () => {
+      const text = Buffer.concat(buffer);
+      res.render('edit', {name: file.name, size: file.size, text, fid: file.id});
+    });
+    readable.once('error', () => res.status(500).json({error}));
   }).catch(notFound(res));
 });
 
@@ -80,7 +85,7 @@ app.post('/api/save', (req, res) => {
 
 app.get('/api/download/:serial', (req, res) => {
   const serial = req.params.serial;
-  download(serial).then(readable => {
+  download(serial).then(({readable}) => {
     readable.pipe(res);
   }).catch(notFound(res));
 });
