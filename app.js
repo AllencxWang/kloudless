@@ -7,9 +7,6 @@ const exphbs = require('express-handlebars');
 const app = express();
 const db = require('./db');
 
-const notFound = res => err => 
-  res.status(404).end(`404 Not Found\r\n${JSON.stringify(err)}`);
-
 const download = serial => new Promise((resolve, reject) => {
   db.getBySerial(serial).then(file => {
     const {account, id} = file;
@@ -31,19 +28,19 @@ app.set('view engine', 'handlebars');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-app.get('/', (req, res) => {
+app.get('/', (req, res, next) => {
   res.redirect(301, '/pages/new');
 });
 
-app.get('/pages/new', (req, res) => {
+app.get('/pages/new', (req, res, next) => {
   res.render('new');
 });
 
-app.get('/pages/view', (req, res) => {
+app.get('/pages/view', (req, res, next) => {
   db.getAll().then(files => res.render('view', {files}));
 });
 
-app.get('/pages/edit/:serial', (req, res) => {
+app.get('/pages/edit/:serial', (req, res, next) => {
   const serial = req.params.serial;
   download(serial).then(({file, readable}) => {
     const buffer = [];
@@ -53,10 +50,10 @@ app.get('/pages/edit/:serial', (req, res) => {
       res.render('edit', {name: file.name, size: file.size, text, fid: file.id});
     });
     readable.once('error', () => res.status(500).json({error}));
-  }).catch(notFound(res));
+  }).catch(next);
 });
 
-app.post('/api/save', (req, res) => {
+app.post('/api/save', (req, res, next) => {
   const expData = JSON.parse(req.body.hidden)[0];
   const fileName = `${Date.now()}.txt`;
   const options = {
@@ -83,11 +80,15 @@ app.post('/api/save', (req, res) => {
   }));
 });
 
-app.get('/api/download/:serial', (req, res) => {
+app.get('/api/download/:serial', (req, res, next) => {
   const serial = req.params.serial;
   download(serial).then(({readable}) => {
     readable.pipe(res);
-  }).catch(notFound(res));
+  }).catch(next);
+});
+
+app.get('*', (req, res, next) => {
+  res.status(404).end('404 Not Found');
 });
 
 module.exports = app;
