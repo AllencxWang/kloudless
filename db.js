@@ -7,7 +7,7 @@ db.init = () => {
 
 db.getAll = () => Promise.resolve(db.files);
 
-db.get = serial => {
+db.getBySerial = serial => {
   return new Promise((resolve, reject) => {
     for (let file of db.files) {
       if (file.serial === serial) {
