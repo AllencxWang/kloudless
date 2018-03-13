@@ -1,11 +1,14 @@
 const express = require('express');
-const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const path = require('path');
 const request = require('request');
 const Readable = require('stream').Readable;
+const exphbs  = require('express-handlebars');
 
 const app = express();
+
+app.engine('handlebars', exphbs({defaultLayout: 'main'}));
+app.set('view engine', 'handlebars');
 
 app.use((req, res, next) => {
   const contentType = req.headers['content-type'] ? req.headers['content-type'] : '';
@@ -26,8 +29,24 @@ app.use((req, res, next) => {
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/', (req, res) => {
+  res.redirect(301, '/pages/new');
+});
+
+app.get('/pages/new', (req, res) => {
+  res.render('new');
+});
+
+app.get('/pages/view', (req, res) => {
+  res.render('view', {
+    main: 'this is handlebar baby'
+  });
+});
+
+app.get('/pages/edit', (req, res) => {
+  res.render('edit');
+});
 
 app.post('/api/save', (req, res) => {
   const data = JSON.parse(req.body.hidden)[0];
