@@ -42,15 +42,21 @@ app.get('/pages/view', (req, res, next) => {
 
 app.get('/pages/edit/:serial', (req, res, next) => {
   const serial = req.params.serial;
-  download(serial).then(({file, readable}) => {
-    const buffer = [];
-    readable.on('data', chunk => buffer.push(chunk));
-    readable.once('end', () => {
-      const text = Buffer.concat(buffer);
-      res.render('edit', {name: file.name, text, serial});
-    });
-    readable.once('error', () => res.status(500).json({error}));
-  }).catch(next);
+  if (db.tryLockSync(serial)) {
+    download(serial).then(({file, readable}) => {
+      const buffer = [];
+      readable.on('data', chunk => buffer.push(chunk));
+      readable.once('end', () => {
+        const text = Buffer.concat(buffer);
+        res.render('edit', {name: file.name, text, serial});
+      });
+      readable.once('error', () => res.status(500).json({error}));
+    }).catch(next);
+  } else {
+    db.getAll().then(files => res.render('view', {
+      files, message: 'the file you are trying to edit was locked'
+    }));
+  }
 });
 
 app.post('/api/save', (req, res, next) => {
@@ -98,7 +104,8 @@ app.post('/api/update', (req, res, next) => {
     
     readable.pipe(request.put(options, (error, response, body) => {
       if (!error && response.statusCode === 200) {
-        res.redirect('/pages/view')
+        db.unlockSync(serial);
+        res.redirect('/pages/view');
       } else {
         res.status(500).json({error, response, body});
       }
