@@ -12,23 +12,6 @@ db.init();
 app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
-app.use((req, res, next) => {
-  const contentType = req.headers['content-type'] ? req.headers['content-type'] : '';
-  if (contentType.indexOf('octet-stream') !== -1 && req.body === undefined) {
-    const buffer = [];
-    req.on('data', chunk => {
-      buffer.push(chunk);
-    });
-    req.once('end', () => {
-      const concated = Buffer.concat(buffer);
-      req.body = concated.toString('utf8');
-      next();
-    });
-  } else {
-    next();
-  }
-});
-
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
@@ -77,16 +60,6 @@ app.post('/api/save', (req, res) => {
       res.status(500).json({error, response, body});
     }
   }));
-});
-
-
-
-app.post('/api/endpoint', (req, res) => {
-  console.log('----------');
-  console.log('headers:', req.headers);
-  console.log('body:', req.body);
-  res.end();
-  console.log('----------');
 });
 
 module.exports = app;
