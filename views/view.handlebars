@@ -2,7 +2,6 @@
   <thead>
     <tr>
       <th>File Name</th>
-      <th>| File Size |</th>
       <th>Edit</th>
     </tr>
   </thead>
@@ -10,7 +9,6 @@
     {{#each files}}
       <tr>
         <td><a href="/api/download/{{this.serial}}">{{this.name}}</a></td>
-        <td>{{this.size}} byte(s)</td>
         <td><a href="/pages/edit/{{this.serial}}">edit</a></td>
       </tr>
     {{/each}}
