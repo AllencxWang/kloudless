@@ -1,5 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('kloudless.db');
+const uuidv4 = require('uuid/v4');
+const LOCK_EXPIRATION = 60000; // 60 seconds
 
 db.serialize(() => {
   const sql = `
@@ -69,22 +71,35 @@ cache.insert = file => {
 cache.tryLockSync = serial => {
   if (serial in cache.indexes) {
     const file = cache.files[ cache.indexes[serial] ];
-    if (!file.lockTimer) {
-      file.lockTimer = setTimeout(() => file.lockTimer = null, 60000);
-      return true;
+    if (!file.timer) {
+      file.timer = setTimeout(() => {
+        delete file.timer;
+        delete file.uuid;
+      }, LOCK_EXPIRATION);
+      file.uuid = uuidv4();
+      return file.uuid;
     }
   }
-  return false;
+  return null;
 };
 
 cache.unlockSync = serial => {
   if (serial in cache.indexes) {
     const file = cache.files[ cache.indexes[serial] ];
-    if (file.lockTimer) {
-      clearTimeout(file.lockTimer);
-      file.lockTimer = null;
+    if (file.timer) {
+      clearTimeout(file.timer);
+      delete file.timer;
+      delete file.uuid;
     }
   }
+};
+
+cache.getUuidSync = serial => {
+  if (serial in cache.indexes) {
+    const file = cache.files[ cache.indexes[serial] ];
+    return file.uuid;
+  }
+  return null;
 };
 
 module.exports = cache;

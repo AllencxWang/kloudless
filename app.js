@@ -42,13 +42,14 @@ app.get('/pages/view', (req, res, next) => {
 
 app.get('/pages/edit/:serial', (req, res, next) => {
   const serial = req.params.serial;
-  if (db.tryLockSync(serial)) {
+  const uuid = db.tryLockSync(serial);
+  if (uuid) {
     download(serial).then(({file, readable}) => {
       const buffer = [];
       readable.on('data', chunk => buffer.push(chunk));
       readable.once('end', () => {
         const text = Buffer.concat(buffer);
-        res.render('edit', {name: file.name, text, serial});
+        res.render('edit', {name: file.name, text, serial, uuid});
       });
       readable.once('error', () => res.status(500).json({error}));
     }).catch(next);
@@ -88,6 +89,10 @@ app.post('/api/save', (req, res, next) => {
       res.status(500).json({error, response, body});
     }
   }));
+});
+
+app.get('/api/uuids/:serial', (req, res, next) => {
+  res.json({uuid: db.getUuidSync(req.params.serial)});
 });
 
 app.post('/api/update', (req, res, next) => {
