@@ -20,8 +20,6 @@ const download = serial => new Promise((resolve, reject) => {
   }).catch(reject);
 });
 
-db.init();
-
 app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 

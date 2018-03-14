@@ -1,4 +1,11 @@
 const app = require('./app'); 
-const port = process.env.PORT || 8080; 
+const db = require('./db');
+const port = process.env.PORT || 8080;
 
-app.listen(port, () => console.log(`Listening on port ${port}!`));
+db.init().then(() => {
+  app.listen(port, () => console.log(`Listening on port ${port}!`));
+}).catch(err => {
+  console.log('Fail to initialize db ...');
+  process.exit(1);
+});
+

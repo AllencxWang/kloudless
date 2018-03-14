@@ -15,3 +15,18 @@
   </tbody>
 </table>
 <h1>{{message}}</h1>
+
+<script>
+  const table = document.querySelector('table');
+  table.addEventListener('click', evt => {
+    const href = evt.target.getAttribute('href');
+    if (href && href.indexOf('edit') !== -1) {
+      if (evt.target.dataset.clicked) {
+        evt.preventDefault();
+        console.log('waiting for data fetching, be patient!!');
+      } else {
+        evt.target.dataset.clicked = true;
+      }
+    }
+  });
+</script>
