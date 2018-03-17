@@ -9,7 +9,7 @@
   height: 100vh;
 }
 .my-panel {
-  flex: 1;
+  width: 50%;
 }
 .my-panel-body {
   display: flex;
@@ -89,8 +89,11 @@ export default {
         data: this.input
       }).then(res => {
         const data = res.data;
-        this.storage.fileId = data.id;
-        this.storage.fileName = data.name;
+        this.storage = {
+          ...storage,
+          fileId: data.id,
+          fileName: data.name
+        };
         localStorage.setItem('storage', JSON.stringify(this.storage));
         this.process = '';
         // alert('saved');

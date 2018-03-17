@@ -18,6 +18,7 @@
 .info {
   margin: 0 5px;
   border-bottom: 1px solid $Concrete;
+  word-wrap: break-word;
 }
 </style>
 
