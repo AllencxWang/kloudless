@@ -29,8 +29,10 @@
       <button class="btn" :disabled="!storage.token" @click="save">PERSIST CONTENT</button>
     </div>
     <div class="info-group">
-      <div class="info">name: {{ storage.name }}</div>
-      <div class="info">id: {{ storage.id }}</div>
+      <div class="info">folder name: {{ storage.folderName }}</div>
+      <div class="info">folder id: {{ storage.folderId }}</div>
+      <div class="info">file name: {{ storage.fileName }}</div>
+      <div class="info">file id: {{ storage.fileId }}</div>
       <div class="info">account: {{ storage.account }}</div>
       <div class="info">token: {{ storage.token }}</div>
     </div>

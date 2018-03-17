@@ -26,8 +26,9 @@
     <Panel class="my-panel" header="EDIT">
       <template slot="body">
         <div class="my-panel-body">
-          <Controller class="my-controller" :unset="unset" :save="save" :storage="storage" @storageSet="onStorageSet" />
-          <Editor class="my-editor" :disabled="!storage.token" :input="input" :update="update" />
+          <Controller class="my-controller" :unset="unset" :save="save" :storage="storage" @storageSet="onStorageSet" v-show="!process" />
+          <Editor class="my-editor" :disabled="!storage.token" :input="input" :update="update" v-show="!process" />
+          <h1 v-show="process">{{ process }}</h1>
         </div>
       </template>
     </Panel>
@@ -36,7 +37,6 @@
         <div class="preview" v-html="compiledMarkdown"></div>
       </template>
     </Panel>
-    
   </div>
 </template>
 
@@ -63,7 +63,8 @@ export default {
     return {
       input: '',
       storage: {},
-      explorer: {}
+      explorer: {},
+      process: false,
     };
   },
   methods: {
@@ -72,50 +73,63 @@ export default {
     }, 300),
     unset() {
       this.storage = {};
+      localStorage.removeItem('storage');
     },
     save() {
       const storage = this.storage;
+      this.process = 'saving ...';
       axios({
         method: 'POST',
         url: `https://api.kloudless.com/v1/accounts/${storage.account}/storage/files/?overwrite=True`,
         headers: {
           'Content-Type': 'application/octet-stream',
           'Authorization': `Bearer ${storage.token}`,
-          'X-Kloudless-Metadata': JSON.stringify({name: 'Kloudless-JS-Assessment', parent_id: storage.id}),
+          'X-Kloudless-Metadata': JSON.stringify({name: 'Kloudless-JS-Assessment.md', parent_id: storage.folderId}),
         },
         data: this.input
-      }).then(data => {
-        localStorage.setItem('storage', JSON.stringify(storage));
-        console.log('PASS', data);
+      }).then(res => {
+        const data = res.data;
+        this.storage.fileId = data.id;
+        this.storage.fileName = data.name;
+        localStorage.setItem('storage', JSON.stringify(this.storage));
+        this.process = '';
+        // alert('saved');
       }).catch(err => {
-        console.log('FAIL', err);
+        this.process = '';
+        alert(`fail to save: ${JSON.stringify(err)}`);
       });
     },
     onStorageSet(storage) {
       this.storage = {
-        name: storage.name,
-        id: storage.id,
+        folderName: storage.name,
+        folderId: storage.id,
         account: storage.account,
         token: storage.bearer_token ? storage.bearer_token.key : ''
       };
     }
   },
   mounted() {
-    // const storage = JSON.parse(localStorage.getItem('storage'));
-    // if (storage) {
-    //   console.log('get storeage', storage);
-    //   axios({
-    //     method: 'GET',
-    //     url: `https://api.kloudless.com/v1/accounts/${storage.account}/storage/files/${storage.id}/contents`,
-    //     headers: {
-    //       'Authorization': `Bearer ${storage.token}`,
-    //     },
-    //   }).then(data => {
-    //     this.storage = storage;
-    //   }).catch(err => {
-    //     console.log('not loadded', err);
-    //   });
-    // }
+    const storage = JSON.parse(localStorage.getItem('storage'));
+    if (storage && storage.fileId) {
+      this.storage = storage;
+      this.process = 'retrieving ...';
+      const options = {
+        method: 'GET',
+        url: `https://api.kloudless.com/v1/accounts/${storage.account}/storage/files/${storage.fileId}/contents`,
+        headers: {
+          'Authorization': `Bearer ${storage.token}`,
+        },
+      };
+      console.log('options', options);
+      axios(options).then(res => {
+        this.input = res.data;
+        this.process = '';
+        // alert('retrieved');
+      }).catch(err => {
+        this.process = '';
+        alert(`fail to retrieve: ${JSON.stringify(err)}`);
+      });
+    }
   }
 }
 </script>
